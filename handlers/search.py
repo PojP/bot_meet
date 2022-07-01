@@ -48,13 +48,9 @@ async def chatting(message : types.Message, state : FSMContext):
             async with fstate.proxy() as fdata:
                 if f is None:
                     g=await message.copy_to(data["uid"])
-                    print(g.message_id)
+
                 else:
-                    print(f)
-                    print(data["messages"])
-                    print()
-                    print()
-                    print()
+
                     if f.from_user.is_bot is False:
                         index_msg=data["messages"].index(f.message_id)
                         repl_msg=None
@@ -66,14 +62,14 @@ async def chatting(message : types.Message, state : FSMContext):
                     else:
                         index_msg=data["messages"].index(f.message_id)
                         g=  await message.copy_to(data["uid"],reply_to_message_id=fdata["messages"][index_msg])
-                    print(fdata["messages"])
+
                 if g != None:
                     data["messages"].append(message.message_id)
                     if (m_id:=g.message_id) is not None:
                         fdata["messages"].append(m_id)
                     else:
                         fdata["messages"].append(g)
-                    print("msg appended")
+
 
                 
         
@@ -98,7 +94,6 @@ async def next_user(message : types.Message, state : FSMContext):
 async def share_contact(callback : types.CallbackQuery, state : FSMContext):
     async with state.proxy() as data:
         uid=data["uid"]
-        print("share pressed")
         fg_state=dp.current_state(user=uid, chat=uid)
         await bot.send_message(data["uid"], f"User shows own contact data!\nUsername is: @{callback.from_user.username}\nFull name is: {callback.from_user.full_name}", reply_markup=keyboard_cl_start)
         await callback.message.answer("Contact details are displayed", reply_markup=keyboard_cl_start)
@@ -111,7 +106,6 @@ async def share_contact(callback : types.CallbackQuery, state : FSMContext):
 async def dont_share_contact(callback : types.CallbackQuery, state : FSMContext):
     async with state.proxy() as data:
         uid=data["uid"]
-        print("dont share pressed")
         fg_state=dp.current_state(user=uid, chat=uid)
         await bot.send_message(data["uid"], f"The interlocutor decided not to show his contacts :(", reply_markup=keyboard_cl_start)
         await callback.message.answer("Contact details are hidden", reply_markup=keyboard_cl_start)
@@ -169,12 +163,6 @@ async def set_chat(fid: int, sid : int):
         fid_msg=await bot.send_message(fid, f_mess,reply_markup=keyboard_cl_chatting)
         sid_msg=await bot.send_message(sid, f_mess,reply_markup=keyboard_cl_chatting)
 
-
-        print(fid_msg.message_id)
-        print(sid_msg.message_id)
-        print()
-        print()
-        
 
         async with fstate.proxy() as data:
             data["repl_msg"]=0
