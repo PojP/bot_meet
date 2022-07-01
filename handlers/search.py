@@ -41,8 +41,42 @@ async def search(message : types.Message, state : FSMContext):
 
 async def chatting(message : types.Message, state : FSMContext):
     async with state.proxy() as data:
+        fstate=dp.current_state(chat=data["uid"],user=data["uid"])
         if message.content_type!="command":
-            await message.copy_to(data["uid"])
+            f=message.reply_to_message
+            g=None
+            async with fstate.proxy() as fdata:
+                if f is None:
+                    g=await message.copy_to(data["uid"])
+                    print(g.message_id)
+                else:
+                    print(f)
+                    print(data["messages"])
+                    print()
+                    print()
+                    print()
+                    if f.from_user.is_bot is False:
+                        index_msg=data["messages"].index(f.message_id)
+                        repl_msg=None
+                        try:
+                            repl_msg=fdata["messages"][index_msg].message_id
+                        except AttributeError:
+                            repl_msg=fdata["messages"][index_msg]
+                        g=  await message.copy_to(data["uid"],reply_to_message_id=repl_msg)
+                    else:
+                        index_msg=data["messages"].index(f.message_id)
+                        g=  await message.copy_to(data["uid"],reply_to_message_id=fdata["messages"][index_msg])
+                    print(fdata["messages"])
+                if g != None:
+                    data["messages"].append(message.message_id)
+                    if (m_id:=g.message_id) is not None:
+                        fdata["messages"].append(m_id)
+                    else:
+                        fdata["messages"].append(g)
+                    print("msg appended")
+
+                
+        
 async def stop(message : types.Message, state : FSMContext):
     async with state.proxy() as data:
         uid= data["uid"]
@@ -131,14 +165,28 @@ async def set_chat(fid: int, sid : int):
 
         del_user_from_search(sid)
         del_user_from_search(fid)
+        f_mess="The interlocutor was found!!! You have 10 minutes to chat\n You can write to him\n\nTo stop communication send /next or /stop"
+        fid_msg=await bot.send_message(fid, f_mess,reply_markup=keyboard_cl_chatting)
+        sid_msg=await bot.send_message(sid, f_mess,reply_markup=keyboard_cl_chatting)
+
+
+        print(fid_msg.message_id)
+        print(sid_msg.message_id)
+        print()
+        print()
+        
 
         async with fstate.proxy() as data:
+            data["repl_msg"]=0
+            data["my_id"]=sid_msg.message_id+1
             data["uid"] = sid
+            data["messages"]=[types.Message]
         async with sstate.proxy() as data:
+            data["repl_msg"]=0
+            data["my_id"]=sid_msg.message_id+1
             data["uid"] = fid
-        f_mess="The interlocutor was found!!! You have 10 minutes to chat\n You can write to him\n\nTo stop communication send /next or /stop"
-        await bot.send_message(fid, f_mess,reply_markup=keyboard_cl_chatting)
-        await bot.send_message(sid, f_mess,reply_markup=keyboard_cl_chatting)
+            data["messages"]=[types.Message]
+
         await timer_to_close(fid, sid)
         return True
     return False
